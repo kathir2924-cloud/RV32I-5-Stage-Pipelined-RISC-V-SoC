@@ -1,0 +1,89 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision - 12;
+:vpi_module "C:\iverilog\lib\ivl\system.vpi";
+:vpi_module "C:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "C:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "C:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "C:\iverilog\lib\ivl\va_math.vpi";
+S_000001e86ba74650 .scope module, "jump_link_unit_tb" "jump_link_unit_tb" 2 3;
+ .timescale -9 -12;
+v000001e86bb565f0_0 .var "jump", 0 0;
+v000001e86bb56690_0 .net "link_address", 31 0, L_000001e86bb56870;  1 drivers
+v000001e86bb56730_0 .var "pc", 31 0;
+S_000001e86ba747e0 .scope module, "dut" "jump_link_unit" 2 10, 3 1 0, S_000001e86ba74650;
+ .timescale 0 0;
+    .port_info 0 /INPUT 32 "pc";
+    .port_info 1 /INPUT 1 "jump";
+    .port_info 2 /OUTPUT 32 "link_address";
+L_000001e86bad2878 .functor BUFT 1, C4<00000000000000000000000000000100>, C4<0>, C4<0>, C4<0>;
+v000001e86bb56fe0_0 .net/2u *"_ivl_0", 31 0, L_000001e86bad2878;  1 drivers
+v000001e86bb56dc0_0 .net *"_ivl_2", 31 0, L_000001e86bb567d0;  1 drivers
+L_000001e86bad28c0 .functor BUFT 1, C4<00000000000000000000000000000000>, C4<0>, C4<0>, C4<0>;
+v000001e86ba74970_0 .net/2u *"_ivl_4", 31 0, L_000001e86bad28c0;  1 drivers
+v000001e86bb5b060_0 .net "jump", 0 0, v000001e86bb565f0_0;  1 drivers
+v000001e86bb5be60_0 .net "link_address", 31 0, L_000001e86bb56870;  alias, 1 drivers
+v000001e86bb5bf00_0 .net "pc", 31 0, v000001e86bb56730_0;  1 drivers
+L_000001e86bb567d0 .arith/sum 32, v000001e86bb56730_0, L_000001e86bad2878;
+L_000001e86bb56870 .functor MUXZ 32, L_000001e86bad28c0, L_000001e86bb567d0, v000001e86bb565f0_0, C4<>;
+    .scope S_000001e86ba74650;
+T_0 ;
+    %vpi_call 2 18 "$display", "======================================" {0 0 0};
+    %vpi_call 2 19 "$display", "        JUMP LINK UNIT TEST" {0 0 0};
+    %vpi_call 2 20 "$display", "======================================" {0 0 0};
+    %pushi/vec4 100, 0, 32;
+    %store/vec4 v000001e86bb56730_0, 0, 32;
+    %pushi/vec4 0, 0, 1;
+    %store/vec4 v000001e86bb565f0_0, 0, 1;
+    %delay 10000, 0;
+    %vpi_call 2 28 "$display", "Test 1: No Jump" {0 0 0};
+    %vpi_call 2 29 "$display", "PC = %d | Jump = %b | Link = %d", v000001e86bb56730_0, v000001e86bb565f0_0, v000001e86bb56690_0 {0 0 0};
+    %load/vec4 v000001e86bb56690_0;
+    %cmpi/e 0, 0, 32;
+    %jmp/0xz  T_0.0, 4;
+    %vpi_call 2 33 "$display", "PASS" {0 0 0};
+    %jmp T_0.1;
+T_0.0 ;
+    %vpi_call 2 35 "$display", "FAIL" {0 0 0};
+T_0.1 ;
+    %pushi/vec4 100, 0, 32;
+    %store/vec4 v000001e86bb56730_0, 0, 32;
+    %pushi/vec4 1, 0, 1;
+    %store/vec4 v000001e86bb565f0_0, 0, 1;
+    %delay 10000, 0;
+    %vpi_call 2 44 "$display", "Test 2: JAL" {0 0 0};
+    %vpi_call 2 45 "$display", "PC = %d | Jump = %b | Link = %d", v000001e86bb56730_0, v000001e86bb565f0_0, v000001e86bb56690_0 {0 0 0};
+    %load/vec4 v000001e86bb56690_0;
+    %cmpi/e 104, 0, 32;
+    %jmp/0xz  T_0.2, 4;
+    %vpi_call 2 49 "$display", "PASS" {0 0 0};
+    %jmp T_0.3;
+T_0.2 ;
+    %vpi_call 2 51 "$display", "FAIL" {0 0 0};
+T_0.3 ;
+    %pushi/vec4 200, 0, 32;
+    %store/vec4 v000001e86bb56730_0, 0, 32;
+    %pushi/vec4 1, 0, 1;
+    %store/vec4 v000001e86bb565f0_0, 0, 1;
+    %delay 10000, 0;
+    %vpi_call 2 60 "$display", "Test 3: JAL/JALR" {0 0 0};
+    %vpi_call 2 61 "$display", "PC = %d | Jump = %b | Link = %d", v000001e86bb56730_0, v000001e86bb565f0_0, v000001e86bb56690_0 {0 0 0};
+    %load/vec4 v000001e86bb56690_0;
+    %cmpi/e 204, 0, 32;
+    %jmp/0xz  T_0.4, 4;
+    %vpi_call 2 65 "$display", "PASS" {0 0 0};
+    %jmp T_0.5;
+T_0.4 ;
+    %vpi_call 2 67 "$display", "FAIL" {0 0 0};
+T_0.5 ;
+    %vpi_call 2 70 "$display", "======================================" {0 0 0};
+    %vpi_call 2 72 "$finish" {0 0 0};
+    %end;
+    .thread T_0;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "tb/jump_link_unit_tb.v";
+    "rtl/jump_link_unit.v";

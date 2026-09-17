@@ -1,0 +1,65 @@
+$date
+	Fri Sep 11 11:58:05 2026
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module hazard_detection_unit_tb $end
+$var wire 1 ! stall $end
+$var reg 1 " id_ex_mem_read $end
+$var reg 5 # id_ex_rd [4:0] $end
+$var reg 5 $ if_id_rs1 [4:0] $end
+$var reg 5 % if_id_rs2 [4:0] $end
+$scope module dut $end
+$var wire 1 " id_ex_mem_read $end
+$var wire 5 & id_ex_rd [4:0] $end
+$var wire 5 ' if_id_rs1 [4:0] $end
+$var wire 5 ( if_id_rs2 [4:0] $end
+$var reg 1 ! stall $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+$end
+#0
+$dumpvars
+b10 (
+b101 '
+b101 &
+b10 %
+b101 $
+b101 #
+0"
+0!
+$end
+#10000
+1!
+1"
+#20000
+1!
+b101 %
+b101 (
+b1 $
+b1 '
+#30000
+0!
+b10 %
+b10 (
+#40000
+b0 $
+b0 '
+b0 #
+b0 &
+#50000
+1!
+b111 %
+b111 (
+b111 $
+b111 '
+b111 #
+b111 &
+#60000
