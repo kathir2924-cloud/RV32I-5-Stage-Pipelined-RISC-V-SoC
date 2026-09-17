@@ -533,7 +533,7 @@ module riscv_core (
         .rst(rst),
 
         .alu_result_in(alu_result),
-        .read_data2_in(ex_read_data2),
+        .read_data2_in(forwarded_b),
         .link_address_in(link_address),
 
         .rd_in(ex_rd),
