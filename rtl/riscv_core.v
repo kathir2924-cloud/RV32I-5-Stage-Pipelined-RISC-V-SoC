@@ -138,6 +138,9 @@ module riscv_core (
     wire branch;
     wire jump;
     wire jalr;
+    wire lui;
+wire auipc;
+
 
     wire [1:0] alu_op;
 
@@ -153,6 +156,8 @@ module riscv_core (
         .branch(branch),
         .jump(jump),
         .jalr(jalr),
+        .lui(lui),
+.auipc(auipc),
 
         .alu_op(alu_op)
     );
@@ -250,6 +255,8 @@ module riscv_core (
     wire id_ex_branch_in;
     wire id_ex_jump_in;
     wire id_ex_jalr_in;
+    wire id_ex_lui_in;
+wire id_ex_auipc_in;
 
     wire [1:0] id_ex_alu_op_in;
 
@@ -278,6 +285,12 @@ module riscv_core (
     assign id_ex_jalr_in =
         control_mux_select ? 1'b0 : jalr;
 
+        assign id_ex_lui_in =
+    control_mux_select ? 1'b0 : lui;
+
+assign id_ex_auipc_in =
+    control_mux_select ? 1'b0 : auipc;
+
     assign id_ex_alu_op_in =
         control_mux_select ? 2'b00 : alu_op;
 
@@ -305,6 +318,8 @@ module riscv_core (
     wire ex_branch;
     wire ex_jump;
     wire ex_jalr;
+    wire ex_lui;
+wire ex_auipc;
 
     wire [1:0] ex_alu_op;
 
@@ -337,6 +352,8 @@ module riscv_core (
         .jalr_in(id_ex_jalr_in),
 
         .alu_op_in(id_ex_alu_op_in),
+        .lui_in(id_ex_lui_in),
+.auipc_in(id_ex_auipc_in),
 
         .pc_out(ex_pc),
 
@@ -359,6 +376,8 @@ module riscv_core (
         .branch_out(ex_branch),
         .jump_out(ex_jump),
         .jalr_out(ex_jalr),
+        .lui_out(ex_lui),
+.auipc_out(ex_auipc),
 
         .alu_op_out(ex_alu_op)
     );
@@ -488,32 +507,39 @@ module riscv_core (
 
 
     // ============================================================
-    // ALU
-    // ============================================================
+// ALU
+// ============================================================
 
-    wire [31:0] alu_input_b;
-    wire [31:0] alu_result;
+wire [31:0] alu_input_a;
+wire [31:0] alu_input_b;
+wire [31:0] alu_result;
 
+// Select ALU input A
+// LUI   : 0 + immediate
+// AUIPC : PC + immediate
+// Others: normal forwarded register value
+assign alu_input_a =
+    ex_lui   ? 32'b0 :
+    ex_auipc ? ex_pc :
+               forwarded_a;
 
-    mux2_1_32bit alu_mux (
-        .a(forwarded_b),
-        .b(ex_immediate),
+mux2_1_32bit alu_mux (
+    .a(forwarded_b),
+    .b(ex_immediate),
 
-        .sel(ex_alu_src),
+    .sel(ex_alu_src),
 
-        .y(alu_input_b)
-    );
+    .y(alu_input_b)
+);
 
+alu processor_alu (
+    .a(alu_input_a),
+    .b(alu_input_b),
 
-    alu processor_alu (
-        .a(forwarded_a),
-        .b(alu_input_b),
+    .op(alu_operation),
 
-        .op(alu_operation),
-
-        .y(alu_result)
-    );
-
+    .y(alu_result)
+);
 
     // ============================================================
     // EX/MEM

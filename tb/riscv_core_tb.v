@@ -48,6 +48,8 @@ initial begin
     $display("x14 = %d", dut.registers.registers[14]);
     $display("x15 = %d", dut.registers.registers[15]);
     $display("x16 = %d", dut.registers.registers[16]);
+    $display("x17 = %h", dut.registers.registers[17]);
+$display("x18 = %h", dut.registers.registers[18]);
 
     $display("----------------------------------------------");
 
@@ -170,6 +172,22 @@ initial begin
     else
         $display("JALR TARGET + FLUSH FAIL");
 
+            // =============================================================
+    // LUI / AUIPC
+    // =============================================================
+
+    if (dut.registers.registers[17] == 32'h12345000)
+        $display("LUI PASS");
+    else
+        $display("LUI FAIL: Expected 12345000, Got %h",
+                 dut.registers.registers[17]);
+
+    if (dut.registers.registers[18] == 32'h00001070)
+        $display("AUIPC PASS");
+    else
+        $display("AUIPC FAIL: Expected 00001070, Got %h",
+                 dut.registers.registers[18]);
+
 
     // =============================================================
     // OVERALL
@@ -190,7 +208,9 @@ initial begin
         (dut.registers.registers[13] == 68) &&
         (dut.registers.registers[14] == 999) &&
         (dut.registers.registers[15] == 100) &&
-        (dut.registers.registers[16] == 999))
+                (dut.registers.registers[16] == 999) &&
+        (dut.registers.registers[17] == 32'h12345000) &&
+        (dut.registers.registers[18] == 32'h00001070))
     begin
         $display("");
         $display("****************************************");
@@ -252,7 +272,7 @@ always @(posedge clk) begin
 
     $display(
         "       ALU: InputA=%h InputB=%h Result=%h",
-        dut.forwarded_a,
+        dut.alu_input_a,
         dut.alu_input_b,
         dut.alu_result
     );

@@ -9,6 +9,11 @@ module control_unit (
     output reg       branch,
     output reg       jump,
     output reg       jalr,
+
+    // New control signals
+    output reg       lui,
+    output reg       auipc,
+
     output reg [1:0] alu_op
 );
 
@@ -22,6 +27,11 @@ always @(*) begin
     branch    = 1'b0;
     jump      = 1'b0;
     jalr      = 1'b0;
+
+    // New signals default to 0
+    lui       = 1'b0;
+    auipc     = 1'b0;
+
     alu_op    = 2'b00;
 
     case (opcode)
@@ -42,11 +52,11 @@ always @(*) begin
 
         // LW
         7'b0000011: begin
-            reg_write = 1'b1;
-            mem_read  = 1'b1;
+            reg_write  = 1'b1;
+            mem_read   = 1'b1;
             mem_to_reg = 1'b1;
-            alu_src   = 1'b1;
-            alu_op    = 2'b00;
+            alu_src    = 1'b1;
+            alu_op     = 2'b00;
         end
 
         // SW
@@ -67,13 +77,15 @@ always @(*) begin
         7'b0110111: begin
             reg_write = 1'b1;
             alu_src   = 1'b1;
-            alu_op    = 2'b11;
+            lui       = 1'b1;
+            alu_op    = 2'b00;
         end
 
         // AUIPC
         7'b0010111: begin
             reg_write = 1'b1;
             alu_src   = 1'b1;
+            auipc     = 1'b1;
             alu_op    = 2'b00;
         end
 

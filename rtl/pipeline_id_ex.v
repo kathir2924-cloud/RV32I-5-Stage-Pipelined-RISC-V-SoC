@@ -23,6 +23,8 @@ module pipeline_id_ex (
     input branch_in,
     input jump_in,
     input jalr_in,
+    input lui_in,
+input auipc_in,
 
     input [1:0] alu_op_in,
 
@@ -46,6 +48,8 @@ module pipeline_id_ex (
     output reg branch_out,
     output reg jump_out,
     output reg jalr_out,
+    output reg lui_out,
+output reg auipc_out,
 
     output reg [1:0] alu_op_out
 );
@@ -74,6 +78,8 @@ always @(posedge clk) begin
         branch_out     <= 1'b0;
         jump_out       <= 1'b0;
         jalr_out       <= 1'b0;
+        lui_out   <= 1'b0;
+auipc_out <= 1'b0;
 
         alu_op_out     <= 2'b00;
 
@@ -101,6 +107,8 @@ always @(posedge clk) begin
         branch_out     <= 1'b0;
         jump_out       <= 1'b0;
         jalr_out       <= 1'b0;
+        lui_out   <= 1'b0;
+auipc_out <= 1'b0;
 
         alu_op_out     <= 2'b00;
 
@@ -128,6 +136,8 @@ always @(posedge clk) begin
         branch_out     <= branch_in;
         jump_out       <= jump_in;
         jalr_out       <= jalr_in;
+        lui_out   <= lui_in;
+auipc_out <= auipc_in;
 
         alu_op_out     <= alu_op_in;
 
