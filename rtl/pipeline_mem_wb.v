@@ -2,6 +2,9 @@ module pipeline_mem_wb (
     input clk,
     input rst,
 
+    // Valid bit
+    input valid_in,
+
     input [31:0] alu_result_in,
     input [31:0] memory_data_in,
     input [31:0] link_address_in,
@@ -11,6 +14,9 @@ module pipeline_mem_wb (
     input reg_write_in,
     input mem_to_reg_in,
     input jump_in,
+
+    // Valid bit
+    output reg valid_out,
 
     output reg [31:0] alu_result_out,
     output reg [31:0] memory_data_out,
@@ -25,7 +31,12 @@ module pipeline_mem_wb (
 
 always @(posedge clk) begin
 
+    // --------------------------------------------------
+    // RESET
+    // --------------------------------------------------
     if (rst) begin
+
+        valid_out        <= 1'b0;
 
         alu_result_out   <= 32'b0;
         memory_data_out  <= 32'b0;
@@ -38,7 +49,13 @@ always @(posedge clk) begin
         jump_out         <= 1'b0;
 
     end
+
+    // --------------------------------------------------
+    // NORMAL PIPELINE TRANSFER
+    // --------------------------------------------------
     else begin
+
+        valid_out        <= valid_in;
 
         alu_result_out   <= alu_result_in;
         memory_data_out  <= memory_data_in;
