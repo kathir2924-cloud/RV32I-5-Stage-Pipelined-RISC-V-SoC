@@ -13,23 +13,33 @@ module mmio_gpio (
     output reg  [31:0] gpio_out
 );
 
+    // ============================================================
+    // GPIO WRITE REGISTER
+    // ============================================================
+
     always @(posedge clk) begin
 
         if (rst) begin
-            gpio_out <= 32'b0;
+            gpio_out <= 32'h00000000;
         end
+
         else if (write_enable) begin
             gpio_out <= write_data;
         end
 
     end
 
+
+    // ============================================================
+    // GPIO READ
+    // ============================================================
+
     always @(*) begin
 
         if (read_enable)
             read_data = gpio_out;
         else
-            read_data = 32'b0;
+            read_data = 32'h00000000;
 
     end
 

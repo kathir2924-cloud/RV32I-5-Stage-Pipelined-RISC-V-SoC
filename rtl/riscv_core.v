@@ -7,11 +7,45 @@ module riscv_core #(
     parameter MMIO_TEST              = 1'b0,
     parameter UART_TX_TEST           = 1'b0,
     parameter UART_RX_TEST           = 1'b0,
-    parameter UART_RX_INTERRUPT_TEST = 1'b0
-) (
-    input wire clk,
+    parameter UART_RX_INTERRUPT_TEST = 1'b0,
+    parameter SOC_MODE = 1'b0
+)   ( 
+        input wire clk,
     input wire rst,
-    input wire uart_rx
+    input wire uart_rx,
+
+    // ============================================================
+    // INSTRUCTION BUS
+    // ============================================================
+
+    output wire [31:0] imem_addr,
+    input  wire [31:0] imem_rdata,
+
+    // ============================================================
+    // DATA MEMORY BUS
+    // ============================================================
+
+    output wire        dmem_read,
+    output wire        dmem_write,
+    output wire [31:0] dmem_addr,
+    output wire [31:0] dmem_wdata,
+    input  wire [31:0] dmem_rdata,
+
+    // ============================================================
+    // EXTERNAL MMIO BUS
+    // ============================================================
+
+    output wire        mmio_read,
+    output wire        mmio_write,
+    output wire [31:0] mmio_addr,
+    output wire [31:0] mmio_wdata,
+    input  wire [31:0] mmio_rdata,
+
+    // ============================================================
+    // EXTERNAL UART INTERRUPT
+    // ============================================================
+
+    input wire uart_rx_irq
 );
     // ============================================================
     // IF STAGE
@@ -19,6 +53,8 @@ module riscv_core #(
 
     wire [31:0] pc;
     wire [31:0] instruction;
+    // External instruction memory address
+assign imem_addr = pc;
 
     wire pc_write;
     wire pc_write_final;
@@ -135,7 +171,13 @@ assign pc_write_final =
 
 generate
 
-    if (CSR_TEST == 1'b1) begin : GEN_CSR_TEST_IMEM
+    if (SOC_MODE == 1'b1) begin : GEN_SOC_IMEM
+
+        assign instruction = imem_rdata;
+
+    end
+
+    else if (CSR_TEST == 1'b1) begin : GEN_CSR_TEST_IMEM
 
         csr_test_instruction_memory csr_test_imem (
             .address(pc),
@@ -189,16 +231,16 @@ generate
 
     end
 
-    else begin : GEN_TRAP_TEST_IMEM
+    else begin : GEN_NORMAL_IMEM
 
-        trap_test_instruction_memory trap_test_imem (
+        instruction_memory instruction_mem (
             .address(pc),
             .instruction(instruction)
         );
 
     end
 
-endgenerate 
+endgenerate
 
 
     // ============================================================
@@ -272,8 +314,8 @@ assign flush_id_ex =
     .clk(clk),
     .rst(rst),
 
-    .write_enable(mmio_write && gpio_sel),
-    .read_enable(mmio_read && gpio_sel),
+    .write_enable(mmio_write_internal && gpio_sel),
+    .read_enable(mmio_read_internal && gpio_sel),
 
     .write_data(mem_read_data2),
 
@@ -287,7 +329,7 @@ mmio_uart_tx #(
 ) uart_tx_peripheral (
     .clk(clk),
     .rst(rst),
-    .write_enable(mmio_write && uart_tx_sel),
+    .write_enable(mmio_write_internal && uart_tx_sel),
     .write_data(mem_read_data2),
     .tx(uart_tx),
     .busy(uart_tx_busy)
@@ -299,7 +341,7 @@ mmio_uart_rx #(
     .clk(clk),
     .rst(rst),
     .rx(uart_rx),
-    .read_enable(mmio_read && uart_rx_sel),
+    .read_enable(mmio_read_internal && uart_rx_sel),
     .read_data(uart_rx_read_data),
     .data_valid(uart_rx_data_valid),
     .receiving_status(uart_rx_receiving)
@@ -343,7 +385,21 @@ wire        csr_use_imm;
     .csr_imm(csr_imm),
     .csr_use_imm(csr_use_imm)
 );
+assign mmio_read =
+    SOC_MODE &&
+    mem_mem_read &&
+    soc_mmio_access;
 
+assign mmio_write =
+    SOC_MODE &&
+    mem_mem_write &&
+    soc_mmio_access;
+
+assign mmio_addr =
+    mem_alu_result;
+
+assign mmio_wdata =
+    mem_read_data2;
 
     // ============================================================
     // CONTROL UNIT
@@ -736,6 +792,11 @@ wire [31:0] ex_instruction;
     wire mem_reg_write;
 
     wire [31:0] mem_alu_result;
+    wire soc_mmio_access;
+
+assign soc_mmio_access =
+    (mem_alu_result >= 32'h10000000) &&
+    (mem_alu_result <= 32'h1000001F);
 
 
     forwarding_unit forwarding (
@@ -955,7 +1016,7 @@ riscv_csr csr_unit (
     .timer_interrupt(timer_interrupt),
     .timer_interrupt_pending(timer_interrupt_pending),
 
-    .uart_rx_interrupt(uart_rx_interrupt),
+   .uart_rx_interrupt(uart_rx_interrupt_to_csr),
     .uart_rx_interrupt_pending(uart_rx_interrupt_pending),
 
     .cycle_count(cycle_count),
@@ -1063,6 +1124,7 @@ alu processor_alu (
     wire mem_mem_to_reg;
     wire mem_jump;
     wire mem_valid;
+    
     // ============================================================
 // RESULT SENT TO EX/MEM
 // ============================================================
@@ -1123,8 +1185,7 @@ wire        gpio_sel;
 wire        uart_tx_sel;
 wire        uart_rx_sel;
 
-wire        mmio_read;
-wire        mmio_write;
+
 wire        uart_tx;
 wire        uart_tx_busy;
 
@@ -1145,25 +1206,47 @@ reg uart_rx_interrupt_pending_latched;
 wire uart_rx_interrupt_clear;
 
 
+wire mmio_read_internal;
+wire mmio_write_internal;
+wire uart_rx_interrupt_to_csr;
+wire [31:0] mmio_decoder_read_data;
 
+wire        bus_mmio_read;
+wire        bus_mmio_write;
+wire [31:0] bus_mmio_addr;
+wire [31:0] bus_mmio_wdata;
 
+assign bus_mmio_read =
+    SOC_MODE
+        ? 1'b0
+        : mem_mem_read;
 
+assign bus_mmio_write =
+    SOC_MODE
+        ? 1'b0
+        : mem_mem_write;
+
+assign bus_mmio_addr =
+    mem_alu_result;
+
+assign bus_mmio_wdata =
+    mem_read_data2;
 
 mmio_decoder mmio (
-    .mem_read(mem_mem_read),
-    .mem_write(mem_mem_write),
+    .mem_read(bus_mmio_read),
+    .mem_write(bus_mmio_write),
+    .address(bus_mmio_addr),
+    .write_data(bus_mmio_wdata),
 
-    .address(mem_alu_result),
-    .write_data(mem_read_data2),
-
-    .read_data(mmio_read_data),
+    .read_data(mmio_decoder_read_data),
 
     .gpio_sel(gpio_sel),
     .uart_tx_sel(uart_tx_sel),
     .uart_rx_sel(uart_rx_sel),
 
-    .mmio_read(mmio_read),
-    .mmio_write(mmio_write),
+    .mmio_read(mmio_dec_read),
+    .mmio_write(mmio_dec_write),
+
     .status_sel(status_sel),
     .control_sel(control_sel)
 );
@@ -1179,9 +1262,9 @@ always @(posedge clk) begin
         uart_rx_interrupt_enable <= 1'b0;
     end
 
-    else if (mmio_write && control_sel) begin
-        uart_rx_interrupt_enable <= mem_read_data2[0];
-    end
+    else if (mmio_write_internal && control_sel) begin
+    uart_rx_interrupt_enable <= mem_read_data2[0];
+end
 
 end
 
@@ -1205,29 +1288,49 @@ always @(posedge clk) begin
     end
 end
 assign uart_rx_interrupt_clear =
-    mmio_read &&
+    mmio_read_internal &&
     uart_rx_sel;
 
 
     // ============================================================
     // DATA MEMORY
     // ============================================================
+assign dmem_addr  = mem_alu_result;
+assign dmem_wdata = mem_read_data2;
 
-    wire [31:0] memory_data;
+assign dmem_read =
+    SOC_MODE &&
+    mem_mem_read &&
+    !soc_mmio_access;
+
+assign dmem_write =
+    SOC_MODE &&
+    mem_mem_write &&
+    !soc_mmio_access;
 
 
-    data_memory dmem (
+   generate
+
+    if (SOC_MODE == 1'b0) begin : GEN_INTERNAL_DMEM
+
+        data_memory dmem (
     .clk(clk),
-
-    .mem_read(mem_mem_read && !mmio_read),
-    .mem_write(mem_mem_write && !mmio_write),
-
+    .mem_read(mem_mem_read && !mmio_read_internal),
+    .mem_write(mem_mem_write && !mmio_write_internal),
     .address(mem_alu_result),
-
     .write_data(mem_read_data2),
-
     .read_data(memory_data)
 );
+
+    end
+
+    else begin : GEN_EXTERNAL_DMEM
+
+        assign memory_data = dmem_rdata;
+
+    end
+
+endgenerate
 
 
     // ============================================================
@@ -1250,13 +1353,21 @@ assign uart_rx_interrupt_clear =
 
         .alu_result_in(mem_alu_result),
         .memory_data_in(
-    gpio_sel
-        ? gpio_read_data
-        : uart_rx_sel
-            ? uart_rx_read_data
-            : status_sel
-                ? status_read_data
+    SOC_MODE
+        ? (
+            soc_mmio_access
+                ? mmio_rdata
                 : memory_data
+          )
+        : (
+            gpio_sel
+                ? gpio_read_data
+                : uart_rx_sel
+                    ? uart_rx_read_data
+                    : status_sel
+                        ? status_read_data
+                        : memory_data
+          )
 ),
         .link_address_in(mem_link_address),
 
