@@ -577,10 +577,10 @@ assign id_ex_trap_cause_in =
     id_valid ? trap_cause : 32'b0;
 
 assign id_ex_csr_read_in =
-    control_mux_select ? 1'b0 : csr_read;
+    control_mux_select ? 1'b0 : csr_read_control;
 
 assign id_ex_csr_write_in =
-    control_mux_select ? 1'b0 : csr_write;
+    control_mux_select ? 1'b0 : csr_write_control;
 
 assign id_ex_csr_addr_in =
     csr_addr;
@@ -1209,6 +1209,10 @@ wire uart_rx_interrupt_clear;
 wire mmio_read_internal;
 wire mmio_write_internal;
 wire uart_rx_interrupt_to_csr;
+assign uart_rx_interrupt_to_csr =
+    SOC_MODE
+        ? uart_rx_irq
+        : uart_rx_interrupt;
 wire [31:0] mmio_decoder_read_data;
 
 wire        bus_mmio_read;
@@ -1295,6 +1299,7 @@ assign uart_rx_interrupt_clear =
     // ============================================================
     // DATA MEMORY
     // ============================================================
+wire [31:0] memory_data;
 assign dmem_addr  = mem_alu_result;
 assign dmem_wdata = mem_read_data2;
 
@@ -1340,6 +1345,7 @@ endgenerate
     wire [31:0] wb_alu_result;
     wire [31:0] wb_memory_data;
     wire [31:0] wb_link_address;
+    
 
     wire wb_mem_to_reg;
     wire wb_jump;
