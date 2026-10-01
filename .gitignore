@@ -1,0 +1,33 @@
+# ============================================================
+# RISC-V Simulation Outputs
+# ============================================================
+
+*.vcd
+*.vvp
+*.fst
+*.lxt
+*.lxt2
+
+# Compiled simulation executables
+*_sim
+*_tb
+sim
+simulation
+
+# Simulation logs
+*.log
+*.compile.log
+*.run.log
+
+# GTKWave
+*.sav
+
+# Build/output directories
+build/
+out/
+
+# Editor / OS files
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

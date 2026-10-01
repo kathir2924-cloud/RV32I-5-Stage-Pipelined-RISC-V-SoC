@@ -73,8 +73,11 @@ module riscv_uart_irq_mret_tb;
     // ============================================================
 
     initial begin
+        $dumpfile("riscv_uart_irq_mret.vcd");
+$dumpvars(0, riscv_uart_irq_mret_tb);
         clk = 1'b0;
         forever #5 clk = ~clk;
+        
     end
 
 
